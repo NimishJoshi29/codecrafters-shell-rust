@@ -7,10 +7,9 @@ fn main() {
     loop {
         let mut input = String::new();
         print_prompt_and_get_input(&mut input);
-        match input.as_str() {
-            "exit 0" => exit(0),
-            "exit" => exit(0),
-            s if s.starts_with("echo ") => handle_echo_command(&input),
+        match input.split_whitespace().next() {
+            Some("exit") => exit(0),
+            Some("echo") => handle_echo_command(&input),
             _ => handle_unknown_command(&input),
         }
     }
