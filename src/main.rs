@@ -35,4 +35,5 @@ fn handle_echo_command(command: &str) {
         }
         print!("{}", c);
     }
+    println!("");
 }
