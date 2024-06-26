@@ -7,10 +7,11 @@ fn main() {
     loop {
         let mut input = String::new();
         print_prompt_and_get_input(&mut input);
-        if input == "exit 0" {
-            exit(0);
+        match input.as_str() {
+            "exit 0" => exit(0),
+            s if s.starts_with("echo") => handle_echo_command(&input),
+            _ => handle_unknown_command(&input),
         }
-        handle_unknown_command(&input);
     }
 }
 
@@ -24,4 +25,13 @@ fn print_prompt_and_get_input(command: &mut String) {
 
 fn handle_unknown_command(input: &str) {
     println!("{}: command not found", input);
+}
+
+fn handle_echo_command(command: &str) {
+    let mut itr = command.split_whitespace();
+    itr.next();
+    for s in itr {
+        print!("{} ", s);
+    }
+    println!();
 }
