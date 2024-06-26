@@ -8,9 +8,12 @@ fn main() {
     // Wait for user input
     let stdin = io::stdin();
     let mut input = String::new();
-    match stdin.read_line(&mut input) {
-        Ok(n) => println!("{} bytes read", n),
-        Err(e) => println!("{}", e.kind()),
-    }
-    println!("{}", input);
+
+    let _ = stdin.read_line(&mut input);
+    input.pop();
+    handle_unknown_command(&input);
+}
+
+fn handle_unknown_command(input: &str) {
+    println!("{}: command not found", input);
 }
