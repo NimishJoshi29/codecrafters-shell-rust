@@ -9,7 +9,8 @@ fn main() {
         print_prompt_and_get_input(&mut input);
         match input.as_str() {
             "exit 0" => exit(0),
-            s if s.starts_with("echo") => handle_echo_command(&input),
+            "exit" => exit(0),
+            s if s.starts_with("echo ") => handle_echo_command(&input),
             _ => handle_unknown_command(&input),
         }
     }
@@ -28,10 +29,10 @@ fn handle_unknown_command(input: &str) {
 }
 
 fn handle_echo_command(command: &str) {
-    let mut itr = command.split_whitespace();
-    itr.next();
-    for s in itr {
-        print!("{} ", s);
+    for (i, c) in command.char_indices() {
+        if i < 5 {
+            continue;
+        }
+        print!("{}", c);
     }
-    println!();
 }
