@@ -1,4 +1,5 @@
 use std::{
+    env, fs,
     io::{self, Write},
     process::exit,
 };
@@ -7,10 +8,11 @@ fn main() {
     loop {
         let mut input = String::new();
         print_prompt_and_get_input(&mut input);
-        match input.split_whitespace().next() {
+        let mut itr = input.split_whitespace();
+        match itr.next() {
             Some("exit") => exit(0),
             Some("echo") => handle_echo_command(&input),
-            Some("type") => handle_type_command(&input),
+            Some("type") => handle_type_command(&itr.next().expect("error")),
             _ => handle_unknown_command(&input),
         }
     }
@@ -35,17 +37,51 @@ fn handle_echo_command(command: &str) {
         }
         print!("{}", c);
     }
-    println!("");
+    println!();
 }
 
 fn handle_type_command(input: &str) {
-    let mut itr = input.split_whitespace();
-    itr.next();
-    let command = itr.next().unwrap();
+    get_path(input);
     let builtins = ["echo", "exit", "type"];
-    if builtins.contains(&command) {
-        println!("{} is a shell builtin", command);
+    if builtins.contains(&input) {
+        println!("{} is a shell builtin", input);
     } else {
-        println!("{}: not found", command);
+        match get_path(input) {
+            Some(p) => println!("{}", p),
+            None => println!("{}: not found", input),
+        }
     }
+}
+
+fn get_path(command: &str) -> Option<String> {
+    let path;
+    match env::var("PATH") {
+        Ok(r) => path = r,
+        Err(e) => {
+            println!("Error occured: {}", e);
+            exit(0)
+        }
+    }
+    for p in path.split(':') {
+        let files = fs::read_dir(p).unwrap();
+        for file in files {
+            match file {
+                Ok(f) => {
+                    if f.file_name()
+                        .into_string()
+                        .expect("Error converting file name")
+                        == command
+                    {
+                        return Some(format!(
+                            "{} is {}",
+                            command,
+                            f.path().into_os_string().into_string().unwrap()
+                        ));
+                    }
+                }
+                Err(e) => println!("Error while reading file of dir: {}", e),
+            }
+        }
+    }
+    None
 }
