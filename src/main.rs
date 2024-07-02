@@ -12,7 +12,7 @@ fn main() {
         match itr.next() {
             Some("exit") => exit(0),
             Some("echo") => handle_echo_command(&input),
-            Some("type") => handle_type_command(&itr.next().expect("error")),
+            Some("type") => handle_type_command(itr.next().expect("error")),
             _ => handle_unknown_command(&input),
         }
     }
@@ -67,15 +67,24 @@ fn get_path(command: &str) -> Option<String> {
         for file in files {
             match file {
                 Ok(f) => {
-                    if f.file_name()
-                        .into_string()
-                        .expect("Error converting file name")
-                        == command
+                    if match f.file_name().into_string() {
+                        Ok(name) => name,
+                        Err(_) => {
+                            println!("Error converting file name");
+                            exit(0);
+                        }
+                    } == command
                     {
                         return Some(format!(
                             "{} is {}",
                             command,
-                            f.path().into_os_string().into_string().unwrap()
+                            match f.path().into_os_string().into_string() {
+                                Ok(c) => c,
+                                Err(_) => {
+                                    println!("Error converting file name");
+                                    exit(0);
+                                }
+                            }
                         ));
                     }
                 }
