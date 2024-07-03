@@ -1,10 +1,10 @@
 use std::{
     env, fs,
     io::{self, Write},
-    process::exit,
+    process::{exit, Command},
 };
 
-fn main() {
+fn main() -> ! {
     loop {
         let mut input = String::new();
         print_prompt_and_get_input(&mut input);
@@ -13,7 +13,22 @@ fn main() {
             Some("exit") => exit(0),
             Some("echo") => handle_echo_command(&input),
             Some("type") => handle_type_command(itr.next().expect("error")),
-            _ => handle_unknown_command(&input),
+            some_command => {
+                if let Some(path_to_exe) = get_path(some_command.expect("Error getting command.")) {
+                    let mut output = Command::new(path_to_exe);
+                    for arg in itr {
+                        output.arg(arg);
+                    }
+                    let output = output.output().expect("Error executing the program.");
+                    let mut prog_opt = String::new();
+                    for opt in output.stdout {
+                        prog_opt.push(opt as char);
+                    }
+                    print!("{}", prog_opt);
+                } else {
+                    handle_unknown_command(some_command.expect("Error unwraping"));
+                }
+            }
         }
     }
 }
@@ -41,13 +56,12 @@ fn handle_echo_command(command: &str) {
 }
 
 fn handle_type_command(input: &str) {
-    get_path(input);
     let builtins = ["echo", "exit", "type"];
     if builtins.contains(&input) {
         println!("{} is a shell builtin", input);
     } else {
         match get_path(input) {
-            Some(p) => println!("{}", p),
+            Some(p) => println!("{} is {}", input, p),
             None => println!("{}: not found", input),
         }
     }
@@ -75,17 +89,16 @@ fn get_path(command: &str) -> Option<String> {
                         }
                     } == command
                     {
-                        return Some(format!(
-                            "{} is {}",
-                            command,
-                            match f.path().into_os_string().into_string() {
+                        return Some(
+                            (match f.path().into_os_string().into_string() {
                                 Ok(c) => c,
                                 Err(_) => {
                                     println!("Error converting file name");
                                     exit(0);
                                 }
-                            }
-                        ));
+                            })
+                            .to_string(),
+                        );
                     }
                 }
                 Err(e) => println!("Error while reading file of dir: {}", e),
